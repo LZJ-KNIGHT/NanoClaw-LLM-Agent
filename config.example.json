@@ -1,0 +1,42 @@
+{
+    "_说明": "配置模板。用法：复制为 config.json 后填入真实值。不想落盘密钥时，可以不建 config.json，直接把密钥写进环境变量（见 README 的「配置」一节）。",
+    "api_key": "在此填入你的 API Key",
+    "base_url": "https://api.siliconflow.cn/v1",
+    "models": {
+        "main": "deepseek-ai/DeepSeek-V4-Pro",
+        "subagent": "deepseek-ai/DeepSeek-V4-Flash",
+        "cheap": "deepseek-ai/DeepSeek-V4-Flash"
+    },
+    "workspace": ".",
+    "max_iterations": 32,
+    "identity_file": "identity.md",
+    "feishu": {
+        "app_id": "在此填入飞书 app_id",
+        "app_secret": "在此填入飞书 app_secret"
+    },
+    "qq": {
+        "app_id": "在此填入QQ机器人 app_id",
+        "app_secret": "在此填入QQ机器人 app_secret"
+    },
+    "web": {
+        "enabled": true,
+        "host": "0.0.0.0",
+        "port": 8080
+    },
+    "mcp_servers": {
+        "poetry": {
+            "command": "python",
+            "args": ["mcp_servers/poetry_server.py"],
+            "description": "古诗词查询服务"
+        },
+        "filesystem": {
+            "command": "npx.cmd",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "./"
+            ],
+            "description": "工作区文件系统读写工具（需要本机已安装 Node.js）"
+        }
+    }
+}

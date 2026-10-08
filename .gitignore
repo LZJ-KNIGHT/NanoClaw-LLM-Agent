@@ -1,0 +1,49 @@
+# ============================================================
+# NanoClaw .gitignore
+# 原则：密钥、虚拟环境、运行产物、个人数据 一律不进仓库
+# ============================================================
+
+# ---------- 密钥与本地配置（绝对不能提交）----------
+# 含 api_key / 飞书 app_secret / QQ app_secret
+config.json
+.env
+.env.*
+
+# ---------- Python 虚拟环境与编译缓存 ----------
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ---------- 运行产物 ----------
+# botpy.log* 覆盖 botpy.log 与其轮转文件 botpy.log.2026-09-13
+botpy.log*
+*.log
+*.log.*
+workspace/sessions/*
+!workspace/sessions/.gitkeep
+workspace/memory/*
+!workspace/memory/.gitkeep
+
+# ---------- Agent 长期记忆（记录着使用者个人信息）----------
+memory/*
+!memory/.gitkeep
+
+# ---------- IDE / 操作系统 ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------- 个人备考资料（不公开）----------
+# docs/ 放的是本地复习用的教学文档；两个 md 也一并兜底，防止文件被挪回根目录
+docs/
+NanoClaw_教学文档.md
+NanoClaw_秋招复习.md
+
+# ---------- 与项目无关的收藏文件 ----------
+features_en.md
