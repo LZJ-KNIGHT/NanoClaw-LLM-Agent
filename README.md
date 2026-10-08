@@ -18,7 +18,6 @@
 - [项目结构](#项目结构)
 - [技术栈](#技术栈)
 - [常见问题](#常见问题)
-- [已知限制](#已知限制)
 
 ---
 
@@ -54,56 +53,33 @@
 
 ## 架构总览
 
-```mermaid
-flowchart TD
-    subgraph 渠道层["渠道层 channels/"]
-        CLI[CLIChannel]
-        WEB[WebChannel]
-        FS[FeishuChannel]
-        QQ[QQChannel]
-    end
+一条消息从进入到返回，依次穿过下面这几层：
 
-    subgraph 总线["消息总线 bus/queue.py"]
-        INB[(inbound queue)]
-        OUTB[(outbound queue)]
-    end
-
-    GW[Gateway<br/>路由中枢]
-
-    subgraph Agent内核["Agent 内核 agent/"]
-        CTX[ContextBuilder<br/>System Prompt 构造]
-        LOOP[AgentLoop<br/>ReAct 主循环]
-        MEM[MemoryConsolidator<br/>上下文压缩]
-        SKILL[SkillsLoader<br/>技能加载]
-        REG[ToolRegistry<br/>工具注册表]
-    end
-
-    subgraph 工具["工具层 agent/tools/"]
-        T1[filesystem / shell]
-        T2[web_search / web_fetch]
-        T3[spawn_subagent]
-        T4[MCP 工具]
-    end
-
-    PROV[Provider<br/>OpenAI 兼容]
-    SESS[(SessionManager<br/>JSONL 持久化)]
-    LLM[LLM 服务]
-
-    CLI --> INB
-    WEB --> INB
-    FS --> INB
-    QQ --> INB
-    INB --> GW
-    GW --> LOOP
-    LOOP --> CTX
-    LOOP --> MEM
-    LOOP --> REG
-    CTX --> SKILL
-    REG --> T1 & T2 & T3 & T4
-    LOOP --> PROV --> LLM
-    LOOP --> SESS
-    GW --> OUTB
-    OUTB --> CLI & WEB & FS & QQ
+```text
+用户消息
+   │
+   ▼
+渠道层  channels/          CLI · Web · 飞书 · QQ
+   │                       只负责收发消息，不掺杂任何业务逻辑
+   │  写入 inbound queue
+   ▼
+消息总线  bus/queue.py      inbound / outbound 双队列，生产-消费解耦
+   │
+   ▼
+网关  gateway.py            按 session_key 复用会话，路由消息
+   │
+   ▼
+Agent 内核  agent/loop.py    ReAct 主循环：思考 → 调工具 → 观察（最多 32 轮）
+   ├── context.py            System Prompt 构造
+   ├── skills.py             技能按需加载，注入上下文
+   ├── memory.py             上下文超阈值时压缩
+   ├── tools/                工具注册表
+   │      filesystem · shell · web_search · web_fetch · spawn_subagent · MCP
+   ├── providers/            OpenAI 兼容协议 → LLM 服务
+   └── session/              JSONL 会话持久化
+   │
+   ▼
+渠道层  channels/            结果写回 outbound queue，回到原渠道
 ```
 
 **依赖方向是单向的**（上层依赖下层，下层不认识上层）：
@@ -310,15 +286,6 @@ export DDGS_PROXY="http://127.0.0.1:7890"
 ### 报 `No module named 'pip._vendor.typing_extensions'`
 
 解释器环境损坏，建议重建虚拟环境后重新 `pip install -r requirements.txt`。
-
----
-
-## 已知限制
-
-- **`web_search` 依赖境外服务**：国内网络需配置代理，见上文
-- **Shell 黑名单可绕过**：正则黑名单只能防误操作，生产环境应改用容器沙箱
-- **密钥明文存储**：默认写在本机 `config.json`（已加入 `.gitignore`），推荐改用环境变量
-- **入站消息串行处理**：网关按顺序消费队列，高并发场景下需要引入并发控制
 
 ---
 
